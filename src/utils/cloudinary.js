@@ -5,7 +5,7 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-console.log(cloudinary.config())
+// console.log(cloudinary.config())
 const uploadToCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) return null;
@@ -20,4 +20,15 @@ const uploadToCloudinary = async (localFilePath) => {
     }
 };
 
-export { uploadToCloudinary }
+
+const deleteToClodinary = async (path) => {
+    try {
+        if(!path) return null
+        const response = await cloudinary.uploader.destroy(path)
+        if(!response.result === "ok") return null
+        return true
+    } catch (error) {
+        throw new ApiError(500, error.message)
+    }
+}
+export { uploadToCloudinary ,deleteToClodinary}
