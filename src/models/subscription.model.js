@@ -9,7 +9,7 @@ const subscriptionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User" // this is who is subscribed
     }
-},{timestamps:true})
+}, { timestamps: true })
 
 
 

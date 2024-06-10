@@ -200,7 +200,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         }, {
             new: true
         }).
-        res.status(200).json(new ApiResponse(200, "Video published successfully", updatedVideo))
+            res.status(200).json(new ApiResponse(200, "Video published successfully", updatedVideo))
     }
 })
-export { getAllVideos, publishVideo, getVideoById, updateVideo, deleteVideo ,togglePublishStatus}
+export { getAllVideos, publishVideo, getVideoById, updateVideo, deleteVideo, togglePublishStatus }
