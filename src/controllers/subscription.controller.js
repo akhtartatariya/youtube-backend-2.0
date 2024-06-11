@@ -1,6 +1,6 @@
 //toggleSubscription , getchannelSubscribers , getSubscribedChannels
 
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import asyncHandler from "../utils/asyncHander.js";
 import { Subscription } from "../models/subscription.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -16,9 +16,9 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     if (!isValidObjectId(channelId)) {
         throw new ApiError(404, "Invalid channel id")
     }
-    const channel = await Subscription.find({ channel: channelId, subscriber: request.user?._id })
+    const channel = await Subscription.findOne({ channel: channelId, subscriber: req.user?._id })
     if (channel) {
-        const channel = await Subscription.findByIdAndDelete({ channel: channelId, subscriber: req.user?._id })
+        const channel = await Subscription.findOneAndDelete({ channel: channelId, subscriber: req.user?._id })
 
         if (!channel) {
             throw new ApiError(500, "Unable to toggle subscription")
@@ -43,7 +43,7 @@ const getChannelSubscribers = asyncHandler(async (req, res) => {
     const channelSubscribers = await Subscription.aggregate([
         {
             $match: {
-                channel: channelId
+                channel: new mongoose.Types.ObjectId(channelId)
             }
         },
         {
@@ -85,7 +85,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     const subscribedChannels = await Subscription.aggregate([
         {
             $match: {
-                subscriber: subscriberId
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
             }
         },
         {
@@ -117,7 +117,6 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     if(!subscribedChannels){
         throw new ApiError(500, "Unable to get subscribed channels")
     }
-
     res.status(200).json(new ApiResponse(200, "Subscribers fetched successfully", subscribedChannels))
 })
 export { toggleSubscription, getChannelSubscribers , getSubscribedChannels }

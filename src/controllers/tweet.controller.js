@@ -1,15 +1,14 @@
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { Tweet } from "../models/tweet.model.js";
 import asyncHandler from "../utils/asyncHander.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-
 const createTweet = asyncHandler(async (req, res) => {
 
     const { content } = req.body
 
-    if (!content?.length) {
+    if (!content?.trim()) {
         throw new ApiError(400, "Please provide a content")
     }
     const owner = req.user?._id
@@ -31,12 +30,12 @@ const updateTweet = asyncHandler(async (req, res) => {
     if (!isValidObjectId(tweetId)) {
         throw new ApiError(404, "Invalid tweet id")
     }
-    if (!content?.length) {
+    if (!content?.trim()) {
         throw new ApiError(404, "Please provide a content ")
     }
 
-    const tweet = await Tweet.findByIdAndUpdate(req.user._id, {
-        content
+    const tweet = await Tweet.findByIdAndUpdate(tweetId, {
+        content,
     }, { new: true })
 
     if (!tweet) {
@@ -70,7 +69,28 @@ const getUserTweets = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Invalid user id")
     }
 
-    const tweets = await Tweet.findById(userId)
+    const tweets = await Tweet.aggregate([
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: "$owner.username"
+                }
+            }
+        }
+    ])
 
     if (!tweets) {
         throw new ApiError(404, "User not found")

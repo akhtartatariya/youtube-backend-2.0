@@ -70,7 +70,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     const video = await Video.aggregate([
         {
             $match: {
-                _id: mongoose.Types.ObjectId(videoId)
+                _id: new mongoose.Types.ObjectId(videoId)
             }
 
         },
@@ -84,7 +84,10 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                owner: { $arrayElemAt: ['$owner', 0] }
+                owner: {
+                    $first: '$owner.username',
+                }
+
             }
         },
         {
@@ -169,7 +172,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!deletedVideo) {
         throw new ApiError(500, "Unable to delete video")
     }
-    res.status(200).json(new ApiResponse(200, "Video deleted successfully"))
+    res.status(200).json(new ApiResponse(200, "Video deleted successfully", []))
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -185,22 +188,13 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     if (!video) {
         throw new ApiError(404, "Video not found")
     }
+    const publishStatus = video.isPublished
+    const updatedVideo = await Video.findOneAndUpdate({ _id: videoId, owner: req.user._id }, {
+        isPublished: !publishStatus
+    }, {
+        new: true
+    })
 
-    if (video.isPublished === true) {
-        const updatedVideo = await Video.findByIdAndUpdate(videoId, {
-            isPublished: false
-        }, {
-            new: true
-        })
-        res.status(200).json(new ApiResponse(200, "Video unpublished successfully", updatedVideo))
-    }
-    else {
-        const updatedVideo = await Video.findByIdAndUpdate(videoId, {
-            isPublished: true
-        }, {
-            new: true
-        }).
-            res.status(200).json(new ApiResponse(200, "Video published successfully", updatedVideo))
-    }
+    res.status(200).json(new ApiResponse(200, "change publish status successfully", updatedVideo))
 })
 export { getAllVideos, publishVideo, getVideoById, updateVideo, deleteVideo, togglePublishStatus }

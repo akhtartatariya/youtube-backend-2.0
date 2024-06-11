@@ -14,8 +14,8 @@ router.route('/').get(getAllVideos).post(upload.fields(
     ]
 ), publishVideo)
 
-router.route('/:videoId').patch(updateVideo).delete(deleteVideo).get(getVideoById)
+router.route('/:videoId').patch(upload.single('thumbnail'),updateVideo).delete(deleteVideo).get(getVideoById)
 
-router.route('/toggle/publish').get(togglePublishStatus)
+router.route('/toggle/publish/:videoId').patch(togglePublishStatus)
 
 export default router

@@ -9,7 +9,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 const addComment = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    const { page = 1, limit = 10 } = req.query
     const { content } = req.body;
     if (!isValidObjectId(videoId)) {
         throw new ApiError(404, "invalid video id")
@@ -25,7 +24,7 @@ const addComment = asyncHandler(async (req, res) => {
         content,
         video: video._id,
         owner: req.user._id
-    }).limit(limit).skip((page - 1) * limit)
+    })
 
     if (!comment) {
         throw new ApiError(500, "Unable to add comment")
@@ -71,7 +70,34 @@ const getVideoComments = asyncHandler(async (req, res) => {
     if (!video) {
         throw new ApiError(403, "video not found")
     }
-    const comments = await Comment.find({ video: video._id }).populate("owner")
+    const comments = await Comment.aggregate([
+        {
+            $match: {
+                video: video._id
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: "$owner.username"
+                }
+            }
+        },
+        {
+            $project: {
+                owner: 1,
+                content: 1
+            }
+        }
+    ])
     res.status(200).json(new ApiResponse(200, "Comments fetched successfully", comments))
 })
 export { addComment, updateComment, deleteComment ,getVideoComments}

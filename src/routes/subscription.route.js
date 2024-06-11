@@ -6,7 +6,7 @@ const router=Router()
 
 router.use(verifyJWT)
 
-router.route('/toggle/:id').patch(toggleSubscription)
-router.route('/channel/:id').get(getChannelSubscribers)
-router.route('/subscribed/:id').get(getSubscribedChannels)
+router.route('/toggle/:channelId').patch(toggleSubscription)
+router.route('/channel/:channelId').get(getChannelSubscribers)
+router.route('/subscribed/:subscriberId').get(getSubscribedChannels)
 export default router

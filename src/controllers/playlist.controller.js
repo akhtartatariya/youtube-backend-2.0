@@ -34,7 +34,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     if (!name || !description) {
         throw new ApiError(400, "All fields are required")
     }
-    const playlist = await Playlist.findByIdAndUpdate(playlistId, {
+    const playlist = await Playlist.findOneAndUpdate({ _id: playlistId, owner: req.user._id }, {
         name,
         description
     }, { new: true })
@@ -49,7 +49,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     if (!isValidObjectId(playlistId)) {
         throw new ApiError(404, "Invalid playlist id")
     }
-    const playlist = await Playlist.findByIdAndDelete(playlistId)
+    const playlist = await Playlist.findOneAndDelete({ _id: playlistId, owner: req.user._id })
     if (!playlist) {
         throw new ApiError(500, " unable to delete playlist")
     }

@@ -88,7 +88,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         res.status(200).json(new ApiResponse(200, "unliked successfully", []))
     }
     else {
-        const like = await Like.create({ likedBy: req.user._id, tweet: tweet._id })
+        const like = await Like.create({ likedBy: req.user?._id, tweet: tweet._id })
         if (!like) {
             throw new ApiError(500, "unable to like tweet")
         }
@@ -100,17 +100,36 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     const LikedVideos = await Like.aggregate([
         {
             $match: {
-                likedBy: req.user._id
+                likedBy: req.user?._id
             }
         },
+        
         {
             $group: {
                 _id: '$video',
-                LikedVideos: { $push: '$video' },
+                
             }
         },
-    ])
-    if(!LikedVideos){
+        {
+            $lookup: {
+                from: 'videos',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'videoDetails'
+            }
+        },
+        {
+            $unwind: '$videoDetails'
+        },
+        {
+            $project: {
+                _id: 0,
+                videoId: '$_id',
+                videoDetails: 1
+            }
+        }
+    ]);
+    if(!LikedVideos?.length){
         throw new ApiError(500, "unable to get liked videos")
     }
     res.status(200).json(new ApiResponse(200, "liked videos found successfully", LikedVideos))
